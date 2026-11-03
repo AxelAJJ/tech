@@ -3,3 +3,5 @@ djangorestframework>=3.16,<3.17
 djangorestframework-simplejwt>=5.5,<6
 drf-spectacular>=0.28,<0.29
 python-dotenv>=1.1,<2
+django-cors-headers>=4.7,<5
+zeep>=4.3,<5

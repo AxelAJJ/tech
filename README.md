@@ -1,10 +1,18 @@
-# TechStore API
+# TechStore API + Frontend
 
-API REST de una tienda de tecnologia ficticia, desarrollada con Django REST Framework.
-Incluye usuarios identificados por correo, el campo adicional `telefono`, CRUD para
-administradores, consulta del perfil propio y autenticacion JWT.
+Aplicacion académica con Django REST Framework y React. Incluye cuentas por correo,
+autenticacion JWT, perfil protegido, widget del clima mediante Open-Meteo y un endpoint
+de Django que consume el servicio SOAP de países con Zeep.
 
-## Instalacion (Windows PowerShell)
+## Requisitos
+
+- Python 3.10 o posterior.
+- Node.js y npm.
+- Acceso a Internet para Open-Meteo y el servicio SOAP de países.
+
+## Iniciar el backend
+
+Desde la raíz del repositorio, en PowerShell:
 
 ```powershell
 py -m venv .venv
@@ -15,52 +23,61 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Si PowerShell bloquea la activacion, usa CMD: `.venv\Scripts\activate.bat`.
+El backend queda disponible en `http://127.0.0.1:8000/`.
 
-## Direcciones
+## Iniciar el frontend
 
-- Swagger (titulo **TechStore API**): http://127.0.0.1:8000/api/docs/
-- Admin: http://127.0.0.1:8000/admin/
-- Registro: `POST /api/v1/auth/register/`
-- CRUD usuarios (solo administradores): `/api/v1/users/`
-- Perfil del usuario autenticado: `GET /api/v1/users/me/`
-- Obtener tokens: `POST /api/token/`
-- Renovar access token: `POST /api/token/refresh/`
-
-El usuario inicia sesion usando su correo electronico. `telefono` se administra desde
-Django Admin y aparece en los serializers y en la documentacion Swagger. El access token
-vence en 30 minutos; el refresh token, en 7 dias.
-
-## Registro
-
-```json
-{
-  "email": "alumno@example.com",
-  "first_name": "Ana",
-  "last_name": "Lopez",
-  "telefono": "6531234567",
-  "password": "ClaveSegura123!"
-}
-```
-
-La contrasena se acepta al crear o actualizar un usuario, pero es write-only y nunca se
-devuelve en la API. Si se edita un usuario sin incluir `password`, su contrasena actual
-se conserva.
-
-## Pruebas
+En una segunda terminal, desde la raíz:
 
 ```powershell
-python manage.py test users
+Set-Location frontend
+Copy-Item .env.example .env
+npm install
+npm run dev
 ```
 
-Las pruebas validan el login JWT por correo, el endpoint de perfil, la ausencia de
-contrasenas en respuestas, la actualizacion de contrasena y que editar otros datos sin
-enviar una contrasena no la cambia.
+Abre la dirección que indique Vite, normalmente `http://localhost:5173/`. El frontend
+usa `VITE_API_BASE_URL` del archivo `frontend/.env` para conectarse al backend. CORS
+está limitado a `localhost:5173` y `127.0.0.1:5173`.
 
-`.gitignore` excluye el entorno virtual, `db.sqlite3` y `.env`. No publiques claves
-secretas reales en GitHub.
+## Flujo de usuario
 
-## Evidencias
+1. Crea una cuenta desde `/register` con correo, nombre, apellido, teléfono y contraseña.
+2. Inicia sesión en `/login`. El frontend solicita el JWT y consulta el perfil.
+3. El Dashboard protegido presenta los datos del usuario y dos widgets.
+4. Cierra sesión desde el botón de navegación.
 
-Consulta [TechStore_API_Evidencias.pdf](./TechStore_API_Evidencias.pdf) para ver las capturas
-de Swagger, autenticacion JWT, consulta del perfil y prueba de actualizacion segura.
+Los access y refresh tokens se conservan en `localStorage` para mantener la sesión en
+este ejercicio; el código no los imprime en consola. La vigencia del access token está
+configurada en 30 minutos.
+
+## APIs
+
+- `POST /api/v1/auth/register/`: registro público.
+- `POST /api/token/`: obtiene access y refresh tokens usando correo y contraseña.
+- `POST /api/token/refresh/`: renueva el access token.
+- `GET /api/v1/users/me/`: obtiene el perfil con `Authorization: Bearer <access>`.
+- `GET /api/v1/integrations/countries/`: consulta el servicio SOAP de países con Zeep;
+  requiere autenticación JWT.
+- `GET /api/docs/`: documentación Swagger.
+
+El widget del clima consulta Open-Meteo desde React. El widget de países consulta el
+endpoint de Django, que a su vez solicita los datos al servicio SOAP CountryInfo.
+
+## Validación
+
+Desde la raíz:
+
+```powershell
+python manage.py test users integrations
+```
+
+Desde `frontend/`:
+
+```powershell
+npm run lint
+npm run build
+```
+
+`.gitignore` excluye el entorno virtual y `db.sqlite3`. No publiques archivos `.env`
+con valores privados.

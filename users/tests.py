@@ -88,3 +88,15 @@ class UserSecurityTests(APITestCase):
         response = self.client.get("/api/schema/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("telefono", str(response.data))
+
+    def test_vite_origin_is_allowed_for_cors_preflight(self):
+        response = self.client.options(
+            "/api/v1/users/me/",
+            HTTP_ORIGIN="http://localhost:5173",
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD="GET",
+        )
+        self.assertIn(response.status_code, (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT))
+        self.assertEqual(
+            response["Access-Control-Allow-Origin"],
+            "http://localhost:5173",
+        )
